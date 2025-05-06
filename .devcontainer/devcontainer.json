@@ -12,7 +12,7 @@
             }
         }
     },
-    "remoteUser": "vscode",
+    "remoteUser": "root",
     "features": {
       "docker-from-docker": {
         "version": "latest"

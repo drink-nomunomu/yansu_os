@@ -5,7 +5,7 @@ ENV RUSTUP_HOME=/usr/local/rustup
 ENV CARGO_HOME=/usr/local/cargo
 ENV PATH=/usr/local/cargo/bin:$PATH
 
-# 必要なパッケージをまとめてインストール
+# 必要なパッケージをまとめてインストール（最小限）
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -14,25 +14,24 @@ RUN apt-get update && \
     build-essential \
     clang \
     pkg-config \
-    python3 \
+    python3-minimal \
     python3-venv \
     python3-pip \
-    sudo \
-    passwd \
     ninja-build \
     meson \
     wget \
+    netcat-openbsd \
     libglib2.0-dev \
     libpixman-1-dev \
     libslirp-dev \
-    vim \
     && rm -rf /var/lib/apt/lists/*
 
-# Rustのインストール
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path --default-toolchain stable && \
-    chmod -R a+w $RUSTUP_HOME $CARGO_HOME
+# Rustのインストール（必要最小限のコンポーネント）
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile minimal && \
+    rm -rf $RUSTUP_HOME/downloads && \
+    rm -rf $RUSTUP_HOME/tmp
 
-# QEMU 9.0.0のインストール
+# QEMU 9.0.0のインストール（最小構成）
 WORKDIR /tmp
 RUN wget https://download.qemu.org/qemu-9.0.0.tar.xz && \
     tar xJf qemu-9.0.0.tar.xz && \
@@ -40,23 +39,15 @@ RUN wget https://download.qemu.org/qemu-9.0.0.tar.xz && \
     mkdir build && cd build && \
     ../configure --target-list=x86_64-softmmu --enable-slirp \
     --disable-docs --disable-guest-agent --disable-guest-agent-msi \
-    --disable-gtk --disable-opengl && \
-    ninja && \
+    --disable-gtk --disable-opengl --disable-virglrenderer --disable-vnc \
+    --disable-nettle --disable-usb-redir --disable-bzip2 \
+    && ninja && \
     ninja install && \
-    cd /tmp && \
-    rm -rf qemu-9.0.0 qemu-9.0.0.tar.xz && \
-    apt-get clean
+    cd / && \
+    rm -rf /tmp/qemu-9.0.0 /tmp/qemu-9.0.0.tar.xz && \
+    apt-get clean && \
+    apt-get autoremove -y
 
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=${USER_UID}
-
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && apt-get install -y sudo \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME 
-
+# ワークスペースの設定
 WORKDIR /workspace
-
 CMD ["bash"]
