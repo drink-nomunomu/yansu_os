@@ -3,7 +3,7 @@
     "dockerFile": "./Dockerfile",
     // devcontainerの作業ディレクトリ指定
     "workspaceFolder": "/workspace",
-    "workspaceMount": "source=${localEnv:HOME}/yansu_os,target=/workspace,type=bind,consistency=cached",
+    "workspaceMount": "source=/home/vscode,target=/workspace,type=bind,consistency=cached",
     "customizations": {
         "vscode": {
             "settings": {
@@ -12,5 +12,11 @@
             }
         }
     },
-    "remoteUser": "vscode"
+    "remoteUser": "vscode",
+    "updateRemoteUserUID": false,
+    "features": {
+      "docker-from-docker": {
+        "version": "latest"
+      }
+    }
 }
