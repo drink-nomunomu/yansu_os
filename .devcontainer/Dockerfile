@@ -53,5 +53,7 @@ RUN groupadd -g 2000 vscode && \
     chmod 0440 /etc/sudoers.d/vscode
 
 WORKDIR /workspace
+# ワークスペースの所有権を設定
+RUN chown -R vscode:vscode /workspace 
 USER vscode
 CMD ["bash"]
