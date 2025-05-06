@@ -25,6 +25,7 @@ RUN apt-get update && \
     libglib2.0-dev \
     libpixman-1-dev \
     libslirp-dev \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # Rustのインストール
@@ -46,14 +47,16 @@ RUN wget https://download.qemu.org/qemu-9.0.0.tar.xz && \
     rm -rf qemu-9.0.0 qemu-9.0.0.tar.xz && \
     apt-get clean
 
-# vscodeユーザーの作成
-RUN groupadd -g 2000 vscode && \
-    useradd -m -s /bin/bash -u 2000 -g 2000 -G sudo vscode && \
-    echo "vscode ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vscode && \
-    chmod 0440 /etc/sudoers.d/vscode
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=${USER_UID}
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME 
 
 WORKDIR /workspace
-# ワークスペースの所有権を設定
-RUN chown -R vscode:vscode /workspace 
-USER vscode
+
 CMD ["bash"]

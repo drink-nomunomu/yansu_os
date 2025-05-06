@@ -13,7 +13,6 @@
         }
     },
     "remoteUser": "vscode",
-    "updateRemoteUserUID": false,
     "features": {
       "docker-from-docker": {
         "version": "latest"
