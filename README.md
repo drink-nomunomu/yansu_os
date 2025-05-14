@@ -10,7 +10,6 @@ vscodeのコマンドパレット(cmd + shift+ p)から「コンテナで再度�
 ### install tools
 
 ```
-```
 # cargo --version
 cargo 1.86.0 (adf9b6ad1 2025-02-28)
 
@@ -46,7 +45,6 @@ usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]
 # qemu-system-x86_64 --version
 QEMU emulator version 9.0.0
 Copyright (c) 2003-2024 Fabrice Bellard and the QEMU Project developers
-```
 ```
 
 ### 備考
