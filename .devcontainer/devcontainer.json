@@ -3,7 +3,7 @@
     "dockerFile": "./Dockerfile",
     // devcontainerの作業ディレクトリ指定
     "workspaceFolder": "/workspace",
-    "workspaceMount": "source=/home/vscode,target=/workspace,type=bind,consistency=cached",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     "customizations": {
         "vscode": {
             "settings": {
