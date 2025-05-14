@@ -12,10 +12,5 @@
             }
         }
     },
-    "remoteUser": "root",
-    "features": {
-      "docker-from-docker": {
-        "version": "latest"
-      }
-    }
+    "remoteUser": "root"
 }
