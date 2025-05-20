@@ -62,7 +62,6 @@ $ echo $DISPLAY
 と表示されること
 
 xquartzの設定で「接続を認証」「ネットワーク・クライアントからの接続を許可」をクリックしておく
-<img width="1051" alt="スクリーンショット 2025-05-20 21 01 54" src="https://github.com/user-attachments/assets/9c2d6d21-5216-4a42-948e-133334304462" />
 
 ```
 $ HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
