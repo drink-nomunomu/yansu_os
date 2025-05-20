@@ -71,6 +71,8 @@ $ HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
 $ xhost + $HOST_IP
 ```
 
+HOST_IPは.devcontainer.jsonのDISPLAY: xxxxx:0のxxxxにも設定してください
+
 
 
 ### 備考
