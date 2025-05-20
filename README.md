@@ -49,6 +49,31 @@ QEMU emulator version 9.0.0
 Copyright (c) 2003-2024 Fabrice Bellard and the QEMU Project developers
 ```
 
+### qemuコマンドをインストールする手順
+
+```
+$ brew install --cask xquartz
+```
+ログインし直す
+```
+$ echo $DISPLAY
+/private/tmp/com.apple.launchd.09tYobfzHt/org.xquartz:0
+```
+と表示されること
+
+```
+$ HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
+```
+```
+$ xhost + $HOST_IP
+```
+
+```
+
+```
+
+
+
 ### 備考
 - 2GB程度のコンテナイメージ
 
