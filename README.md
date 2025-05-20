@@ -1,4 +1,4 @@
-# yansu_os
+<img width="949" alt="スクリーンショット 2025-05-20 21 10 41" src="https://github.com/user-attachments/assets/72bbdb61-b7d0-43c8-9d30-aca72bce75e6" /># yansu_os
 
 [［作って学ぶ］ OSのしくみ⁠─メモリ管理、マルチタスク、ハードウェア制御](https://gihyo.jp/book/2025/978-4-297-14859-1)で必要なライブラリをインストールした諸々
 
@@ -62,6 +62,7 @@ $ echo $DISPLAY
 と表示されること
 
 xquartzの設定で「接続を認証」「ネットワーク・クライアントからの接続を許可」をクリックしておく
+<img width="949" alt="スクリーンショット 2025-05-20 21 10 41" src="https://github.com/user-attachments/assets/cbb908cb-48e4-4fd3-88b1-b9466938101b" />
 
 ```
 $ HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
