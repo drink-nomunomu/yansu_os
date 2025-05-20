@@ -6,11 +6,26 @@
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     "customizations": {
         "vscode": {
+            "extensions": [
+                rust-lang.rust-analyzer,
+            ],
             "settings": {
                 "editor.formatOnSave": true,
                 "terminal.integrated.defaultProfile.linux": "bash"
             }
         }
     },
-    "remoteUser": "root"
+    "remoteUser": "root",
+    // Docker runコマンドの --network=host に相当
+    "runArgs": [
+        "--network=host"
+    ],
+    // Docker runコマンドの -e DISPLAY=HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}') に相当
+    "remoteEnv": {
+        "DISPLAY": "xxxxx"
+    },
+    // Docker runコマンドの -v /tmp/.X11-unix:/tmp/.X11-unix に相当
+    "mounts": [
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
+    ],
 }
