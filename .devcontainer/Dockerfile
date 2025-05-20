@@ -4,8 +4,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV RUSTUP_HOME=/usr/local/rustup
 ENV CARGO_HOME=/usr/local/cargo
 ENV PATH=/usr/local/cargo/bin:$PATH
+ENV DISPLAY=host.docker.internal:0
 
-# 必要なパッケージをまとめてインストール（最小限）
+# 必要なパッケージをまとめてインストール（X11とQEMUのGUI関連パッケージを追加）
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -24,6 +25,12 @@ RUN apt-get update && \
     libglib2.0-dev \
     libpixman-1-dev \
     libslirp-dev \
+    libgtk-3-dev \
+    libsdl2-dev \
+    libspice-server-dev \
+    libx11-dev \
+    libxcursor-dev \
+    xauth \
     && rm -rf /var/lib/apt/lists/*
 
 # Rustのインストール（必要最小限のコンポーネント）
@@ -31,7 +38,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no
     rm -rf $RUSTUP_HOME/downloads && \
     rm -rf $RUSTUP_HOME/tmp
 
-# QEMU 9.0.0のインストール（最小構成）
+# QEMU 9.0.0のインストール（グラフィック対応）
 WORKDIR /tmp
 RUN wget https://download.qemu.org/qemu-9.0.0.tar.xz && \
     tar xJf qemu-9.0.0.tar.xz && \
@@ -39,8 +46,7 @@ RUN wget https://download.qemu.org/qemu-9.0.0.tar.xz && \
     mkdir build && cd build && \
     ../configure --target-list=x86_64-softmmu --enable-slirp \
     --disable-docs --disable-guest-agent --disable-guest-agent-msi \
-    --disable-gtk --disable-opengl --disable-virglrenderer --disable-vnc \
-    --disable-nettle --disable-usb-redir --disable-bzip2 \
+    --enable-gtk --enable-sdl --enable-vnc \
     && ninja && \
     ninja install && \
     cd / && \
