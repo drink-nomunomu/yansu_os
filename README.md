@@ -62,17 +62,6 @@ $ echo $DISPLAY
 xquartzの設定で「接続を認証」「ネットワーク・クライアントからの接続を許可」をクリックしておく
 <img width="949" alt="スクリーンショット 2025-05-20 21 10 41" src="https://github.com/user-attachments/assets/cbb908cb-48e4-4fd3-88b1-b9466938101b" />
 
-```
-$ HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
-```
-```
-$ xhost + $HOST_IP
-```
-
-HOST_IPは.devcontainer.jsonのDISPLAY: xxxxx:0のxxxxにも設定してください
-
-
-
 ### 備考
 - 2GB程度のコンテナイメージ
 
