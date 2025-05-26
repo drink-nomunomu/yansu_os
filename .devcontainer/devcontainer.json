@@ -1,21 +1,21 @@
 {
-    "name": "Rust QEMU Development",
-    "dockerFile": "./Dockerfile",
-    // devcontainerの作業ディレクトリ指定
-    "workspaceFolder": "/workspace",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-    "remoteUser": "root",
-    "customizations": {
-        "vscode": {
-            "settings": {
-                "editor.formatOnSave": true,
-                "terminal.integrated.defaultProfile.linux": "bash",
-                "extensions.gallery": {
-                    "serviceUrl": "https://open-vsx.org/vscode/gallery",
-                    "itemUrl": "https://open-vsx.org/vscode/item"
-                }
-            }
+  "name": "Rust QEMU Development",
+  "dockerFile": "./Dockerfile",
+  // devcontainerの作業ディレクトリ指定
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "remoteUser": "root",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "extensions.gallery": {
+          "serviceUrl": "https://open-vsx.org/vscode/gallery",
+          "itemUrl": "https://open-vsx.org/vscode/item"
         }
-    },
-    "initializeCommand": "xhost + localhost"
+      }
+    }
+  },
+  "initializeCommand": "xhost + localhost"
 }
