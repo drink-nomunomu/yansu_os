@@ -8,6 +8,8 @@ use core::writeln;
 use yansu::graphics::draw_test_pattern;
 use yansu::graphics::fill_rect;
 use yansu::graphics::Bitmap;
+use yansu::qemu::exit_qemu;
+use yansu::qemu::QemuExitCode;
 use yansu::uefi::exit_from_efi_boot_services;
 use yansu::uefi::init_vram;
 use yansu::uefi::EfiHandle;
@@ -53,5 +55,5 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    loop {}
+    exit_qemu(QemuExitCode::Fail);
 }
