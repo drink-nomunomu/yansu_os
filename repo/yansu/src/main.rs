@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(offset_of)]
 
-use core::arch::asm;
 use core::fmt::Write;
 use core::panic::PanicInfo;
 use core::writeln;
@@ -48,19 +47,8 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     )
     .unwrap();
     //println!("Hello, world!");
-    exit_from_efi_boot_services(
-        image_handle,
-        efi_system_table,
-        &mut memory_map,
-    );
+    exit_from_efi_boot_services(image_handle, efi_system_table, &mut memory_map);
     writeln!(w, "Hello, Non-UEFI world!").unwrap();
-    loop {
-        hlt()
-    }
-}
-
-pub fn hlt() {
-    unsafe { asm!("hlt") }
 }
 
 #[panic_handler]

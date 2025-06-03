@@ -12,10 +12,9 @@ pub trait Bitmap {
     /// Returned pointer is valid as long as the given coordinates are valid
     /// which means that passing is_in_*_range tests.
     unsafe fn unchecked_pixel_at_mut(&mut self, x: i64, y: i64) -> *mut u32 {
-        self.buf_mut().add(
-            ((y * self.pixels_per_line() + x) * self.bytes_per_pixel())
-                as usize,
-        ) as *mut u32
+        self.buf_mut()
+            .add(((y * self.pixels_per_line() + x) * self.bytes_per_pixel()) as usize)
+            as *mut u32
     }
     fn pixel_at_mut(&mut self, x: i64, y: i64) -> Option<&mut u32> {
         if self.is_in_x_range(x) && self.is_in_y_range(y) {
@@ -36,21 +35,11 @@ pub trait Bitmap {
 /// # Safety
 ///
 /// (x, y) must be a valid point in the buf.
-unsafe fn unchecked_draw_point<T: Bitmap>(
-    buf: &mut T,
-    color: u32,
-    x: i64,
-    y: i64,
-) {
+unsafe fn unchecked_draw_point<T: Bitmap>(buf: &mut T, color: u32, x: i64, y: i64) {
     *buf.unchecked_pixel_at_mut(x, y) = color;
 }
 
-fn draw_point<T: Bitmap>(
-    buf: &mut T,
-    color: u32,
-    x: i64,
-    y: i64,
-) -> Result<()> {
+fn draw_point<T: Bitmap>(buf: &mut T, color: u32, x: i64, y: i64) -> Result<()> {
     *(buf.pixel_at_mut(x, y).ok_or("Out of Range")?) = color;
     Ok(())
 }
@@ -92,14 +81,7 @@ fn calc_slope_point(da: i64, db: i64, ia: i64) -> Option<i64> {
     }
 }
 
-fn draw_line<T: Bitmap>(
-    buf: &mut T,
-    color: u32,
-    x0: i64,
-    y0: i64,
-    x1: i64,
-    y1: i64,
-) -> Result<()> {
+fn draw_line<T: Bitmap>(buf: &mut T, color: u32, x0: i64, y0: i64, x1: i64, y1: i64) -> Result<()> {
     if !buf.is_in_x_range(x0)
         || !buf.is_in_x_range(x1)
         || !buf.is_in_y_range(y0)
@@ -112,15 +94,11 @@ fn draw_line<T: Bitmap>(
     let dy = (y1 - y0).abs();
     let sy = (y1 - y0).signum();
     if dx >= dy {
-        for (rx, ry) in (0..dx)
-            .flat_map(|rx| calc_slope_point(dx, dy, rx).map(|ry| (rx, ry)))
-        {
+        for (rx, ry) in (0..dx).flat_map(|rx| calc_slope_point(dx, dy, rx).map(|ry| (rx, ry))) {
             draw_point(buf, color, x0 + rx * sx, y0 + ry * sy)?;
         }
     } else {
-        for (rx, ry) in (0..dy)
-            .flat_map(|ry| calc_slope_point(dy, dx, ry).map(|rx| (rx, ry)))
-        {
+        for (rx, ry) in (0..dy).flat_map(|ry| calc_slope_point(dy, dx, ry).map(|rx| (rx, ry))) {
             draw_point(buf, color, x0 + rx * sx, y0 + ry * sy)?;
         }
     }
@@ -153,13 +131,7 @@ fn lookup_font(c: char) -> Option<[[char; 8]; 16]> {
     None
 }
 
-pub fn draw_font_fg<T: Bitmap>(
-    buf: &mut T,
-    x: i64,
-    y: i64,
-    color: u32,
-    c: char,
-) {
+pub fn draw_font_fg<T: Bitmap>(buf: &mut T, x: i64, y: i64, color: u32, c: char) {
     if let Some(font) = lookup_font(c) {
         for (dy, row) in font.iter().enumerate() {
             for (dx, pixel) in row.iter().enumerate() {
@@ -173,13 +145,7 @@ pub fn draw_font_fg<T: Bitmap>(
     }
 }
 
-pub fn draw_str_fg<T: Bitmap>(
-    buf: &mut T,
-    x: i64,
-    y: i64,
-    color: u32,
-    s: &str,
-) {
+pub fn draw_str_fg<T: Bitmap>(buf: &mut T, x: i64, y: i64, color: u32, s: &str) {
     for (i, c) in s.chars().enumerate() {
         draw_font_fg(buf, x + i as i64 * 8, y, color, c)
     }

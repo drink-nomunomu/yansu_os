@@ -111,8 +111,7 @@ impl<'a> Iterator for MemoryMapIterator<'a> {
             None
         } else {
             let e: &EfiMemoryDescriptor = unsafe {
-                &*(self.map.memory_map_buffer.as_ptr().add(self.ofs)
-                    as *const EfiMemoryDescriptor)
+                &*(self.map.memory_map_buffer.as_ptr().add(self.ofs) as *const EfiMemoryDescriptor)
             };
             self.ofs += self.map.descriptor_size;
             Some(e)
@@ -131,8 +130,7 @@ pub struct EfiBootServicesTable {
         descriptor_version: *mut u32,
     ) -> EfiStatus,
     _reserved1: [u64; 21],
-    exit_boot_services:
-        extern "win64" fn(image_handle: EfiHandle, map_key: usize) -> EfiStatus,
+    exit_boot_services: extern "win64" fn(image_handle: EfiHandle, map_key: usize) -> EfiStatus,
 
     _reserved4: [u64; 10],
     locate_protocol: extern "win64" fn(
@@ -153,8 +151,7 @@ impl EfiBootServicesTable {
     }
 }
 const _: () = assert!(offset_of!(EfiBootServicesTable, get_memory_map) == 56);
-const _: () =
-    assert!(offset_of!(EfiBootServicesTable, exit_boot_services) == 232);
+const _: () = assert!(offset_of!(EfiBootServicesTable, exit_boot_services) == 232);
 const _: () = assert!(offset_of!(EfiBootServicesTable, locate_protocol) == 320);
 
 #[repr(C)]
@@ -204,8 +201,7 @@ fn locate_graphic_protocol<'a>(
     let status = (efi_system_table.boot_services.locate_protocol)(
         &EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID,
         null_mut::<EfiVoid>(),
-        &mut graphic_output_protocol as *mut *mut EfiGraphicsOutputProtocol
-            as *mut *mut EfiVoid,
+        &mut graphic_output_protocol as *mut *mut EfiGraphicsOutputProtocol as *mut *mut EfiVoid,
     );
     if status != EfiStatus::Success {
         return Err("Failed to locate graphics output protocol");
@@ -285,10 +281,8 @@ pub fn exit_from_efi_boot_services(
     loop {
         let status = efi_system_table.boot_services.get_memory_map(memory_map);
         assert_eq!(status, EfiStatus::Success);
-        let status = (efi_system_table.boot_services.exit_boot_services)(
-            image_handle,
-            memory_map.map_key,
-        );
+        let status =
+            (efi_system_table.boot_services.exit_boot_services)(image_handle, memory_map.map_key);
         if status == EfiStatus::Success {
             break;
         }
