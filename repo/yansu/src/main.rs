@@ -11,6 +11,7 @@ use yansu::graphics::fill_rect;
 use yansu::graphics::Bitmap;
 use yansu::info;
 use yansu::init::init_basic_runtime;
+use yansu::print::hexdump;
 use yansu::println;
 use yansu::qemu::exit_qemu;
 use yansu::qemu::QemuExitCode;
@@ -32,6 +33,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     info!("info");
     warn!("warn");
     error!("error");
+    hexdump(efi_system_table);
     let mut vram = init_vram(efi_system_table).expect("init_vram failed");
     let vw = vram.width();
     let vh = vram.height();
