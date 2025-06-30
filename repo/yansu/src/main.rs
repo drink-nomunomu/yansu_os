@@ -5,11 +5,13 @@
 use core::fmt::Write;
 use core::panic::PanicInfo;
 use core::writeln;
+use yansu::error;
 use yansu::graphics::draw_test_pattern;
 use yansu::graphics::fill_rect;
 use yansu::graphics::Bitmap;
+use yansu::info;
 use yansu::init::init_basic_runtime;
-use yansu::print;
+use yansu::println;
 use yansu::qemu::exit_qemu;
 use yansu::qemu::QemuExitCode;
 use yansu::uefi::init_vram;
@@ -17,15 +19,19 @@ use yansu::uefi::EfiHandle;
 use yansu::uefi::EfiMemoryType;
 use yansu::uefi::EfiSystemTable;
 use yansu::uefi::VramTextWriter;
+use yansu::warn;
 use yansu::x86::hlt;
 
 
 
 #[no_mangle]
 fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
-    print!("Booting YansuOS...\n");
-    print!("image_handle: {:#018X}\n", image_handle);
-    print!("efi_system_table: {:#p}\n", efi_system_table);
+    println!("Booting YansuOS...");
+    println!("image_handle: {:#018X}", image_handle);
+    println!("efi_system_table: {:#p}", efi_system_table);
+    info!("info");
+    warn!("warn");
+    error!("error");
     let mut vram = init_vram(efi_system_table).expect("init_vram failed");
     let vw = vram.width();
     let vh = vram.height();
@@ -55,6 +61,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 }
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    error!("PANIC: {info:?}");
     exit_qemu(QemuExitCode::Fail);
 }
