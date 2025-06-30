@@ -11,6 +11,7 @@ pub mod result;
 pub mod serial;
 pub mod uefi;
 pub mod x86;
+pub mod init;
 
 #[cfg(test)]
 pub mod test_runner;
@@ -18,8 +19,6 @@ pub mod test_runner;
 #[cfg(test)]
 #[no_mangle]
 fn efi_main(image_handle: uefi::EfiHandle, efi_system_table: &uefi::EfiSystemTable) {
-    let mut memory_map = uefi::MemoryMapHolder::new();
-    uefi::exit_from_efi_boot_services(image_handle, efi_system_table, &mut memory_map);
-    allocator::ALLOCATOR.init_with_mmap(&memory_map);
+    init::init_basic_runtime(image_handle, efi_system_table);
     run_unit_tests()
 }

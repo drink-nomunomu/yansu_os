@@ -8,15 +8,15 @@ use core::writeln;
 use yansu::graphics::draw_test_pattern;
 use yansu::graphics::fill_rect;
 use yansu::graphics::Bitmap;
+use yansu::init::init_basic_runtime;
 use yansu::qemu::exit_qemu;
 use yansu::qemu::QemuExitCode;
-use yansu::uefi::exit_from_efi_boot_services;
 use yansu::uefi::init_vram;
 use yansu::uefi::EfiHandle;
 use yansu::uefi::EfiMemoryType;
 use yansu::uefi::EfiSystemTable;
-use yansu::uefi::MemoryMapHolder;
 use yansu::uefi::VramTextWriter;
+use yansu::x86::hlt;
 
 #[no_mangle]
 fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
@@ -26,14 +26,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     fill_rect(&mut vram, 0x000000, 0, 0, vw, vh).expect("fill_rect failed");
     draw_test_pattern(&mut vram);
     let mut w = VramTextWriter::new(&mut vram);
-    for i in 0..4 {
-        writeln!(w, "i = {i}").unwrap();
-    }
-    let mut memory_map = MemoryMapHolder::new();
-    let status = efi_system_table
-        .boot_services()
-        .get_memory_map(&mut memory_map);
-    writeln!(w, "{status:?}").unwrap();
+    let memory_map = init_basic_runtime(image_handle, efi_system_table);
     let mut total_memory_pages = 0;
     for e in memory_map.iter() {
         if e.memory_type() != EfiMemoryType::CONVENTIONAL_MEMORY {
@@ -49,8 +42,10 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     )
     .unwrap();
     //println!("Hello, world!");
-    exit_from_efi_boot_services(image_handle, efi_system_table, &mut memory_map);
     writeln!(w, "Hello, Non-UEFI world!").unwrap();
+    loop {
+        hlt()
+    }
 }
 
 #[panic_handler]
