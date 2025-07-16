@@ -58,9 +58,6 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     writeln!(w, "Hello, Non-UEFI world!").unwrap();
     let cr3 = yansu::x86::read_cr3();
     println!("cr3 = {cr3:#p}");
-<<<<<<< Updated upstream
-    hexdump(unsafe { &*cr3 });
-=======
     let t = Some(unsafe { &*cr3 });
     println!("{t:?}");
     let t = t.and_then(|t| t.next_level(0));
@@ -69,7 +66,6 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     println!("{t:?}");
     let t = t.and_then(|t| t.next_level(0));
     println!("{t:?}");
->>>>>>> Stashed changes
     loop {
         hlt()
     }

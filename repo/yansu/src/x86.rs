@@ -28,14 +28,8 @@ pub fn write_io_port_u8(port: u16, data: u8) {
             in("dx") port)
     }
 }
-<<<<<<< Updated upstream
-
-pub fn read_cr3() -> *mut RootPageTable {
-    let mut cr3: *mut RootPageTable;
-=======
 pub fn read_cr3() -> *mut PML4 {
     let mut cr3: *mut PML4;
->>>>>>> Stashed changes
     unsafe {
         asm!("mov rax, cr3",
             out("rax") cr3)
@@ -43,9 +37,6 @@ pub fn read_cr3() -> *mut PML4 {
     cr3
 }
 
-<<<<<<< Updated upstream
-pub type RootPageTable = [u8; 1024];
-=======
 pub const PAGE_SIZE: usize = 4096;
 const ATTR_MASK: u64 = 0xFFF;
 const ATTR_PRESENT: u64 = 1 << 0;
@@ -156,4 +147,3 @@ pub type PT = Table<1, 12, [u8; PAGE_SIZE]>;
 pub type PD = Table<2, 21, PT>;
 pub type PDPT = Table<3, 30, PD>;
 pub type PML4 = Table<4, 39, PDPT>;
->>>>>>> Stashed changes
