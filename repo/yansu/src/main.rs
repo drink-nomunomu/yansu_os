@@ -23,9 +23,12 @@ use yansu::uefi::EfiMemoryType;
 use yansu::uefi::EfiSystemTable;
 use yansu::uefi::VramTextWriter;
 use yansu::warn;
+use yansu::x86::flush_tlb;
 use yansu::x86::hlt;
 use yansu::x86::init_exceptions;
+use yansu::x86::read_cr3;
 use yansu::x86::trigger_debug_interrupt;
+use yansu::x86::PageAttr;
 
 #[no_mangle]
 fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
@@ -79,13 +82,24 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     info!("Execution continued.");
     init_paging(&memory_map);
     info!("Now we are using our own page tables!");
-    info!("Reading from memory address 0...");
+    let value_at_zero = unsafe { *(0 as *const u8) };
+    info!("value_at_zero = {value_at_zero}");
+
+    let page_table = read_cr3();
+    unsafe {
+        (*page_table)
+            .create_mapping(0, 4096, 0, PageAttr::NotPresent)
+            .expect("Failed to unmap page 0");
+    }
+    flush_tlb();
+
+    info!("Reading from memory address 0... (again)");
 
     #[allow(clippy::zero_ptr)]
     #[allow(deref_nullptr)]
     let value_at_zero = unsafe { *(0 as *const u8) };
     info!("value_at_zero = {value_at_zero}");
-    
+
     loop {
         hlt()
     }
