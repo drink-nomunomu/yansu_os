@@ -114,10 +114,6 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     executor.enqueue(task1);
     executor.enqueue(task2);
     Executor::run(executor);
-
-    loop {
-        hlt()
-    }
 }
 
 #[panic_handler]
