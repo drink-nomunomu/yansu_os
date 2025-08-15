@@ -32,6 +32,7 @@ use yansu::x86::PageAttr;
 use yansu::executor::block_on;
 use yansu::executor::Executor;
 use yansu::executor::Task;
+use yansu::executor::yield_execution;
 
 #[no_mangle]
 fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
@@ -96,6 +97,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     let task1 = Task::new(async {
         for i in 100..=103 {
             info!("{i}");
+            yield_execution().await;
         }
         Ok(())
     });
@@ -103,17 +105,15 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     let task2 = Task::new(async {
         for i in 200..=203 {
             info!("{i}");
+            yield_execution().await;
         }
         Ok(())
     });
     
     let mut executor = Executor::new();
-    // executor.enqueue(task);
     executor.enqueue(task1);
     executor.enqueue(task2);
-    
     Executor::run(executor);
-
 
     loop {
         hlt()
