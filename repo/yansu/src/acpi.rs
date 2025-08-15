@@ -10,6 +10,7 @@ struct SystemDescriptionTableHeader {
     length: u32,
     _unused: [u8; 28],
 }
+
 const _: () = assert!(size_of::<SystemDescriptionTableHeader>() == 36);
 
 impl SystemDescriptionTableHeader {
@@ -31,11 +32,13 @@ impl<'a> XsdtIterator<'a> {
         XsdtIterator { table, index: 0 }
     }
 }
+
 impl<'a> Iterator for XsdtIterator<'a> {
     // The item will have a static lifetime
     // since it will be allocated on
     // ACPI_RECLAIM_MEMORY region.
     type Item = &'static SystemDescriptionTableHeader;
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.index >= self.table.num_of_entries() {
             None
@@ -52,23 +55,28 @@ impl<'a> Iterator for XsdtIterator<'a> {
 struct Xsdt {
     header: SystemDescriptionTableHeader,
 }
+
 const _: () = assert!(size_of::<Xsdt>() == 36);
 
 impl Xsdt {
     fn find_table(&self, sig: &'static [u8; 4]) -> Option<&'static SystemDescriptionTableHeader> {
         self.iter().find(|&e| e.signature() == sig)
     }
+
     fn header_size(&self) -> usize {
         size_of::<Self>()
     }
+
     fn num_of_entries(&self) -> usize {
         (self.header.length as usize - self.header_size()) / size_of::<*const u8>()
     }
+
     unsafe fn entry(&self, index: usize) -> *const u8 {
         ((self as *const Self as *const u8).add(self.header_size()) as *const *const u8)
             .add(index)
             .read_unaligned()
     }
+
     fn iter(&self) -> XsdtIterator {
         XsdtIterator::new(self)
     }
@@ -77,6 +85,7 @@ impl Xsdt {
 trait AcpiTable {
     const SIGNATURE: &'static [u8; 4];
     type Table;
+
     fn new(header: &SystemDescriptionTableHeader) -> &Self::Table {
         header.expect_signature(Self::SIGNATURE);
         // This is safe as far as phys_addr points to a valid MCFG table and it
@@ -93,7 +102,9 @@ pub struct GenericAddress {
     _unused: [u8; 3],
     address: u64,
 }
+
 const _: () = assert!(size_of::<GenericAddress>() == 12);
+
 impl GenericAddress {
     pub fn address_in_memory_space(&self) -> Result<usize> {
         if self.address_space_id == 0 {
@@ -111,15 +122,18 @@ pub struct AcpiHpetDescriptor {
     address: GenericAddress,
     _reserved1: u32,
 }
+
 impl AcpiTable for AcpiHpetDescriptor {
     const SIGNATURE: &'static [u8; 4] = b"HPET";
     type Table = Self;
 }
+
 impl AcpiHpetDescriptor {
     pub fn base_address(&self) -> Result<usize> {
         self.address.address_in_memory_space()
     }
 }
+
 const _: () = assert!(size_of::<AcpiHpetDescriptor>() == 56);
 
 #[repr(C)]
@@ -133,10 +147,12 @@ pub struct AcpiRsdpStruct {
     length: u32,
     xsdt: u64,
 }
+
 impl AcpiRsdpStruct {
     fn xsdt(&self) -> &Xsdt {
         unsafe { &*(self.xsdt as *const Xsdt) }
     }
+
     pub fn hpet(&self) -> Option<&AcpiHpetDescriptor> {
         let xsdt = self.xsdt();
         xsdt.find_table(b"HPET").map(AcpiHpetDescriptor::new)
