@@ -59,8 +59,7 @@ const ATTR_CACHE_DISABLE: u64 = 1 << 4;
 pub enum PageAttr {
     NotPresent = 0,
     ReadWriteKernel = ATTR_PRESENT | ATTR_WRITABLE,
-    ReadWriteIo =
-        ATTR_PRESENT | ATTR_WRITABLE | ATTR_WRITE_THROUGH | ATTR_CACHE_DISABLE,
+    ReadWriteIo = ATTR_PRESENT | ATTR_WRITABLE | ATTR_WRITE_THROUGH | ATTR_CACHE_DISABLE,
 }
 #[derive(Debug, Eq, PartialEq)]
 pub enum TranslationResult {
@@ -108,16 +107,12 @@ impl<const LEVEL: usize, const SHIFT: usize, NEXT> Entry<LEVEL, SHIFT, NEXT> {
         }
     }
 }
-impl<const LEVEL: usize, const SHIFT: usize, NEXT> fmt::Display
-    for Entry<LEVEL, SHIFT, NEXT>
-{
+impl<const LEVEL: usize, const SHIFT: usize, NEXT> fmt::Display for Entry<LEVEL, SHIFT, NEXT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.format(f)
     }
 }
-impl<const LEVEL: usize, const SHIFT: usize, NEXT> fmt::Debug
-    for Entry<LEVEL, SHIFT, NEXT>
-{
+impl<const LEVEL: usize, const SHIFT: usize, NEXT> fmt::Debug for Entry<LEVEL, SHIFT, NEXT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.format(f)
     }
@@ -127,9 +122,7 @@ impl<const LEVEL: usize, const SHIFT: usize, NEXT> fmt::Debug
 pub struct Table<const LEVEL: usize, const SHIFT: usize, NEXT> {
     entry: [Entry<LEVEL, SHIFT, NEXT>; 512],
 }
-impl<const LEVEL: usize, const SHIFT: usize, NEXT: core::fmt::Debug>
-    Table<LEVEL, SHIFT, NEXT>
-{
+impl<const LEVEL: usize, const SHIFT: usize, NEXT: core::fmt::Debug> Table<LEVEL, SHIFT, NEXT> {
     fn format(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "L{}Table @ {:#p} {{", LEVEL, self)?;
         for i in 0..512 {
@@ -641,7 +634,7 @@ const _: () = assert!(size_of::<TaskStateSegment64Inner>() == 104);
 
 pub struct TaskStateSegment64 {
     inner: Pin<Box<TaskStateSegment64Inner>>,
-    }
+}
 impl TaskStateSegment64 {
     pub fn phys_addr(&self) -> u64 {
         self.inner.as_ref().get_ref() as *const TaskStateSegment64Inner as u64
@@ -708,10 +701,9 @@ pub const BIT_DPL3: u64 = 3u64 << 45;
 
 #[repr(u64)]
 enum GdtAttr {
-    KernelCode =
-        BIT_TYPE_CODE | BIT_PRESENT | BIT_CS_LONG_MODE | BIT_CS_READABLE,
+    KernelCode = BIT_TYPE_CODE | BIT_PRESENT | BIT_CS_LONG_MODE | BIT_CS_READABLE,
     KernelData = BIT_TYPE_DATA | BIT_PRESENT | BIT_DS_WRITABLE,
-    }
+}
 
 #[allow(dead_code)]
 #[repr(C, packed)]
@@ -762,15 +754,12 @@ impl GdtWrapper {
 }
 impl Default for GdtWrapper {
     fn default() -> Self {
-        let tss64 = TaskStateSegment64::
-        new();
+        let tss64 = TaskStateSegment64::new();
         let gdt = Gdt {
             null_segment: GdtSegmentDescriptor::null(),
             kernel_code_segment: GdtSegmentDescriptor::new(GdtAttr::KernelCode),
             kernel_data_segment: GdtSegmentDescriptor::new(GdtAttr::KernelData),
-            task_state_segment: TaskStateSegment64Descriptor::new(
-                tss64.phys_addr(),
-            ),
+            task_state_segment: TaskStateSegment64Descriptor::new(tss64.phys_addr()),
         };
         let gdt = Box::pin(gdt);
         GdtWrapper { inner: gdt, tss64 }
@@ -787,7 +776,7 @@ impl GdtSegmentDescriptor {
     const fn new(attr: GdtAttr) -> Self {
         Self { value: attr as u64 }
     }
-    }
+}
 impl fmt::Display for GdtSegmentDescriptor {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:#18X}", self.value)

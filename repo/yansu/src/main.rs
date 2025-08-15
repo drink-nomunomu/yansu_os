@@ -16,6 +16,7 @@ use yansu::println;
 use yansu::qemu::exit_qemu;
 use yansu::qemu::QemuExitCode;
 use yansu::uefi::init_vram;
+use yansu::uefi::locate_loaded_image_protocol;
 use yansu::uefi::EfiHandle;
 use yansu::uefi::EfiMemoryType;
 use yansu::uefi::EfiSystemTable;
@@ -30,6 +31,10 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     println!("Booting YansuOS...");
     println!("image_handle: {:#018X}", image_handle);
     println!("efi_system_table: {:#p}", efi_system_table);
+    let loaded_image_protocol = locate_loaded_image_protocol(image_handle, efi_system_table)
+        .expect("Failed to get LoadedImageProtocol");
+    println!("image_base: {:#018X}", loaded_image_protocol.image_base);
+    println!("image_size: {:#018X}", loaded_image_protocol.image_size);
     info!("info");
     warn!("warn");
     error!("error");

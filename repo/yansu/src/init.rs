@@ -9,11 +9,7 @@ pub fn init_basic_runtime(
     efi_system_table: &EfiSystemTable,
 ) -> MemoryMapHolder {
     let mut memory_map = MemoryMapHolder::new();
-    exit_from_efi_boot_services(
-        image_handle,
-        efi_system_table,
-        &mut memory_map,
-    );
+    exit_from_efi_boot_services(image_handle, efi_system_table, &mut memory_map);
     ALLOCATOR.init_with_mmap(&memory_map);
     memory_map
 }
