@@ -13,6 +13,8 @@ use yansu::graphics::draw_test_pattern;
 use yansu::graphics::fill_rect;
 use yansu::graphics::Bitmap;
 use yansu::hpet::Hpet;
+
+static mut GLOBAL_HPET: Option<Hpet> = None;
 use yansu::info;
 use yansu::init::init_basic_runtime;
 use yansu::init::init_paging;
@@ -119,10 +121,10 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 
     let hpet = Hpet::new(unsafe { &mut *(hpet as *mut yansu::hpet::HpetRegisters) });
 
-    let task1 = Task::new(async move {
+    let hpet = unsafe { GLOBAL_HPET.insert(hpet) };
+    let task1 = Task::new(async {
         for i in 100..=103 {
-            info!("{i}");
-            info!("{i} hpet.main_counter = {}", hpet.main_counter());
+            info!("{i} hpet.main_counter = {}", unsafe { GLOBAL_HPET.as_ref().unwrap().main_counter() });
             yield_execution().await;
         }
         Ok(())
@@ -130,7 +132,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 
     let task2 = Task::new(async {
         for i in 200..=203 {
-            info!("{i}");
+            info!("{i} hpet.main_counter = {}", unsafe { GLOBAL_HPET.as_ref().unwrap().main_counter() });
             yield_execution().await;
         }
         Ok(())
