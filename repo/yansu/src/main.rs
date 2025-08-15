@@ -30,6 +30,8 @@ use yansu::x86::read_cr3;
 use yansu::x86::trigger_debug_interrupt;
 use yansu::x86::PageAttr;
 use yansu::executor::block_on;
+use yansu::executor::Executor;
+use yansu::executor::Task;
 
 #[no_mangle]
 fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
@@ -91,12 +93,15 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
             .expect("Failed to unmap page 0");
     }
     flush_tlb();
-    let result = block_on(async {
+    let task = Task::new(async {
         info!("Hello from the async world!");
         Ok(())
     });
 
-    info!("block_on completed! result = {result:?}");
+
+    let mut executor = Executor::new();
+    executor.enqueue(task);
+    Executor::run(executor);
 
     loop {
         hlt()

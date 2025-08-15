@@ -10,6 +10,8 @@ use core::panic::Location;
 use core::pin::Pin;
 use core::ptr::null;
 use core::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+use crate::info;
+use alloc::collections::VecDeque;
 
 pub struct Task<T> {
     future: Pin<Box<dyn Future<Output = Result<T>>>>,
@@ -67,5 +69,51 @@ pub fn block_on<T>(
             }
             Poll::Pending => busy_loop_hint(),
         }
+    }
+}
+
+pub struct Executor {
+    task_queue: Option<VecDeque<Task<()>>>,
+}
+
+impl Executor {
+    pub const fn new() -> Self {
+        Self { task_queue: None }
+    }
+
+    fn task_queue(&mut self) -> &mut VecDeque<Task<()>> {
+        if self.task_queue.is_none() {
+            self.task_queue = Some(VecDeque::new());
+        }
+        self.task_queue.as_mut().unwrap()
+    }
+
+    pub fn enqueue(&mut self, task: Task<()>) {
+        self.task_queue().push_back(task)
+    }
+
+    pub fn run(mut executor: Self) -> ! {
+        info!("Executor starts running...");
+        loop {
+            let task = executor.task_queue().pop_front();
+            if let Some(mut task) = task {
+                let waker = no_op_waker();
+                let mut context = Context::from_waker(&waker);
+                match task.poll(&mut context) {
+                    Poll::Ready(result) => {
+                        info!("Task completed: {:?}: {:?}", task, result);
+                    }
+                    Poll::Pending => {
+                        executor.task_queue().push_back(task);
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl Default for Executor {
+    fn default() -> Self {
+        Self::new()
     }
 }
