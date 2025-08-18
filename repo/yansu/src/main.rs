@@ -4,11 +4,12 @@
 
 use core::fmt::Write;
 use core::panic::PanicInfo;
+use core::time::Duration;
 use core::writeln;
 use yansu::error;
-use yansu::executor::yield_execution;
 use yansu::executor::Executor;
 use yansu::executor::Task;
+use yansu::executor::TimeoutFuture;
 use yansu::graphics::draw_test_pattern;
 use yansu::graphics::fill_rect;
 use yansu::graphics::Bitmap;
@@ -119,7 +120,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     info!("HPET is at {hpet:#018X}");
     info!("HPET is at {:#p}", hpet as *const u8);
 
-    let hpet = Hpet::new(unsafe { &mut *(hpet as *mut yansu::hpet::HpetRegisters) });
+    let hpet: Hpet = Hpet::new(unsafe { &mut *(hpet as *mut yansu::hpet::HpetRegisters) });
 
     set_global_hpet(hpet);
 
@@ -128,7 +129,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     let task1 = Task::new(async move {
         for i in 100..=103 {
             info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
-            yield_execution().await;
+            TimeoutFuture::new(Duration::from_secs(1)).await;
         }
         Ok(())
     });
@@ -136,7 +137,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     let task2 = Task::new(async move {
         for i in 200..=203 {
             info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
-            yield_execution().await;
+            TimeoutFuture::new(Duration::from_secs(2)).await;
         }
         Ok(())
     });
