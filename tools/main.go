@@ -30,6 +30,9 @@ func removeEpubCopyright(text string) (string, bool) {
 		"Excerpt From",
 		"This material may be protected by copyright.",
 		"This material may be protected by copyright",
+		"抜粋:",
+		"この作品は著作権で保護されている可能性があります。",
+		"この作品は著作権で保護されている可能性があります",
 	}
 	
 	for _, pattern := range patterns {
@@ -54,6 +57,8 @@ func shouldProcess(text string) bool {
 	epubPatterns := []string{
 		"Excerpt From",
 		"This material may be protected by copyright",
+		"抜粋:",
+		"この作品は著作権で保護されている可能性があります",
 	}
 	
 	for _, pattern := range epubPatterns {
