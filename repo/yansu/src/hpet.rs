@@ -46,8 +46,7 @@ impl Hpet {
     pub fn new(registers: &'static mut HpetRegisters) -> Self {
         let fs_per_count = registers.capabilities_and_id >> 32;
 
-        let num_of_timers =
-            ((registers.capabilities_and_id >> 8) & 0b11111) as usize + 1;
+        let num_of_timers = ((registers.capabilities_and_id >> 8) & 0b11111) as usize + 1;
 
         let freq = 1_000_000_000_000_000 / fs_per_count;
 
@@ -62,8 +61,7 @@ impl Hpet {
 
             for i in 0..hpet.num_of_timers {
                 let timer = &mut hpet.registers.timers[i];
-                let mut config =
-                    read_volatile(&timer.configuration_and_capability);
+                let mut config = read_volatile(&timer.configuration_and_capability);
                 config &= !(TIMER_CONFIG_INT_ENABLE
                     | TIMER_CONFIG_USE_PERIODIC_MODE
                     | TIMER_CONFIG_LEVEL_TRIGGER
@@ -106,8 +104,7 @@ pub fn set_global_hpet(hpet: Hpet) {
 
 pub fn global_timestamp() -> Duration {
     if let Some(hpet) = &*HPET.lock() {
-        let ns =
-            hpet.main_counter() as u128 * 1_000_000_000 / hpet.freq() as u128;
+        let ns = hpet.main_counter() as u128 * 1_000_000_000 / hpet.freq() as u128;
         Duration::from_nanos(ns as u64)
     } else {
         Duration::ZERO

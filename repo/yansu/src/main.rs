@@ -15,6 +15,7 @@ use yansu::init::init_basic_runtime;
 use yansu::init::init_display;
 use yansu::init::init_hpet;
 use yansu::init::init_paging;
+use yansu::init::init_pci;
 use yansu::print::hexdump;
 use yansu::print::set_global_vram;
 use yansu::println;
@@ -70,6 +71,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     init_paging(&memory_map);
 
     init_hpet(acpi);
+    init_pci(acpi);
     let t0 = global_timestamp();
 
     let task1 = Task::new(async move {

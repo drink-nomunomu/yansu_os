@@ -129,10 +129,7 @@ impl<T: Sized> Mutex<T> {
         )
     }
 
-    pub fn under_locked<R: Sized>(
-        &self,
-        f: &dyn Fn(&mut T) -> Result<R>,
-    ) -> Result<R> {
+    pub fn under_locked<R: Sized>(&self, f: &dyn Fn(&mut T) -> Result<R>) -> Result<R> {
         let mut locked = self.lock();
         f(&mut *locked)
     }

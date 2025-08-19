@@ -11,6 +11,7 @@ qemu-system-x86_64 \
   -m 4G \
   -bios third_party/ovmf/RELEASEX64_OVMF.fd \
   -drive format=raw,file=fat:rw:mnt \
+  -machine q35 \
   -chardev stdio,id=char_com1,mux=on,logfile=log/com1.txt \
   -serial chardev:char_com1 \
   -device isa-debug-exit,iobase=0xf4,iosize=0x01
