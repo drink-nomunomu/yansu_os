@@ -5,9 +5,9 @@
 use core::panic::PanicInfo;
 use core::time::Duration;
 use yansu::error;
-use yansu::executor::Executor;
-use yansu::executor::Task;
-use yansu::executor::TimeoutFuture;
+use yansu::executor::sleep;
+use yansu::executor::spawn_global;
+use yansu::executor::start_global_executor;
 use yansu::hpet::global_timestamp;
 use yansu::info;
 use yansu::init::init_allocator;
@@ -74,23 +74,23 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     init_pci(acpi);
     let t0 = global_timestamp();
 
-    let task1 = Task::new(async move {
+    let task1 = async move {
         for i in 100..=103 {
             info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
-            TimeoutFuture::new(Duration::from_secs(1)).await;
+            sleep(Duration::from_secs(1)).await;
         }
         Ok(())
-    });
+    };
 
-    let task2 = Task::new(async move {
+    let task2 = async move {
         for i in 200..=203 {
             info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
-            TimeoutFuture::new(Duration::from_secs(2)).await;
+            sleep(Duration::from_secs(2)).await;
         }
         Ok(())
-    });
+    };
 
-    let serial_task = Task::new(async {
+    let serial_task = async {
         let sp = SerialPort::default();
         if let Err(e) = sp.loopback_test() {
             error!("{e:?}");
@@ -102,14 +102,13 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
                 let c = char::from_u32(v as u32);
                 info!("serial input: {v:#04X} = {c:?}");
             }
-            TimeoutFuture::new(Duration::from_millis(20)).await;
+            sleep(Duration::from_millis(20)).await;
         }
-    });
-    let mut executor = Executor::new();
-    executor.enqueue(task1);
-    executor.enqueue(task2);
-    executor.enqueue(serial_task);
-    Executor::run(executor)
+    };
+    spawn_global(task1);
+    spawn_global(task2);
+    spawn_global(serial_task);
+    start_global_executor()
 }
 
 #[panic_handler]
