@@ -1,6 +1,6 @@
 use crate::result::Result;
-use core::mem::size_of;
 use core::fmt;
+use core::mem::size_of;
 
 #[repr(packed)]
 #[derive(Clone, Copy, Debug)]
