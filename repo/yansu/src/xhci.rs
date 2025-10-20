@@ -392,7 +392,6 @@ impl Controller {
     fn init_slots_and_contexts(&mut self) -> Result<()> {
         let num_slots = self.regs.cap_regs.as_ref().num_of_device_slots();
         unsafe { self.regs.op_regs.get_unchecked_mut() }
-        unsafe { self.regs.op_regs.get_unchecked_mut() }
             .set_dcbaa_ptr(&mut self.device_context_base_array.lock())
     }
 }
