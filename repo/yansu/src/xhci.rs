@@ -67,7 +67,13 @@ impl PciXhciDriver {
         let rt_regs = unsafe {
             Mmio::from_raw(bar0.addr().add(cap_regs.as_ref().rtsoff()) as *mut RuntimeRegisters)
         };
-        Ok((cap_regs, op_regs, rt_regs))
+        let portsc = PortSc::new(bar0, cap_regs.as_ref());
+        Ok(XhcRegisters {
+            cap_regs,
+            op_regs,
+            rt_regs,
+            portsc,
+        })
     }
     pub fn attach(pci: &Pci, bdf: BusDeviceFunction) -> Result<()> {
         info!("Xhci found at: {bdf:?}");
@@ -346,9 +352,6 @@ impl DeviceContextBaseAddressArray {
 
 struct Controller {
     regs: XhcRegisters,
-    device_context_base_array: Mutex<DeviceContextBaseAddressArray>,
-    primary_event_ring: Mutex<EventRing>,
-    command_ring: Mutex<CommandRing>,
     device_context_base_array: Mutex<DeviceContextBaseAddressArray>,
     primary_event_ring: Mutex<EventRing>,
     command_ring: Mutex<CommandRing>,
