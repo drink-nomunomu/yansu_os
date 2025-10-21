@@ -709,6 +709,26 @@ impl CommandRing {
     fn ring_phys_addr(&self) -> u64 {
         self.ring.as_ref() as *const TrbRing as u64
     }
+    pub fn push(&mut self, mut src: GenericTrbEntry) -> Result<u64> {
+        // Calling get_unchecked_mut() here is safe
+        // as far as this function does not move the ring out.
+        let ring = unsafe { self.ring.get_unchecked_mut() };
+        if ring.current().cycle_state() != self.cycle_state_ours {
+            return Err("Command Ring is Full");
+        }
+        src.set_cycle_state(self.cycle_state_ours);
+        let dst_ptr = ring.current_ptr();
+        ring.write_current(src);
+        ring.advance_index(!self.cycle_state_ours)?;
+        if ring.current().trb_type() == TrbType::Link as u32 {
+            // Reached to Link TRB. Let's skip it and toggle the cycle.
+            ring.advance_index(!self.cycle_state_ours)?;
+            self.cycle_state_ours = !self.cycle_state_ours;
+        }
+        // The returned ptr will be used for waiting on command completion
+        // events.
+        Ok(dst_ptr as u64)
+    }
 }
 impl Default for CommandRing {
     fn default() -> Self {
