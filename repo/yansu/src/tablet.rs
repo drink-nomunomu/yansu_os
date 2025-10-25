@@ -261,6 +261,14 @@ pub async fn start_usb_tablet(
         .iter()
         .find(|e| e.usage == UsbHidUsage::Button(3))
         .ok_or("Button(3) not found")?;
+    let desc_abs_x = input_report_items
+        .iter()
+        .find(|e| e.usage == UsbHidUsage::X && e.is_absolute)
+        .ok_or("Absolute pointer X not found")?;
+    let desc_abs_y = input_report_items
+        .iter()
+        .find(|e| e.usage == UsbHidUsage::Y && e.is_absolute)
+        .ok_or("Absolute pointer Y not found")?;
     loop {
         let report = request_hid_report(xhc, slot, ctrl_ep_ring).await?;
         if report == prev_report {
@@ -269,7 +277,9 @@ pub async fn start_usb_tablet(
         let l = desc_button_l.value_from_report(&report);
         let r = desc_button_r.value_from_report(&report);
         let c = desc_button_c.value_from_report(&report);
-        info!("{report:?}: ({l:?}, {c:?}, {r:?})");
+        let ax = desc_abs_x.value_from_report(&report);
+        let ay = desc_abs_y.value_from_report(&report);
+        info!("{report:?}: ({l:?}, {c:?}, {r:?}, {ax:?}, {ay:?})");
         prev_report = report;
     }
 }
