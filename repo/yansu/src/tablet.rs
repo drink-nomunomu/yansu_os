@@ -1,6 +1,6 @@
 extern crate alloc;
 use crate::info;
-use crate::print::hexdump;
+use crate::print::{hexdump, hexdump_slice};
 use crate::result::Result;
 use crate::usb::*;
 use crate::xhci::CommandRing;
@@ -30,6 +30,6 @@ pub async fn start_usb_tablet(
         request_hid_report_descriptor(xhc, slot, ctrl_ep_ring, interface_desc.interface_number)
             .await?;
     info!("Report Descriptor:");
-    hexdump(&report);
+    hexdump_slice(&report);
     Ok(())
 }

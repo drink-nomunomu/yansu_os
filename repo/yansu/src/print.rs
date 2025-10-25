@@ -104,3 +104,8 @@ fn hexdump_bytes(bytes: &[u8]) {
 pub fn hexdump<T: Sized>(data: &T) {
     hexdump_bytes(unsafe { slice::from_raw_parts(data as *const T as *const u8, size_of::<T>()) })
 }
+
+pub fn hexdump_slice(data: &[u8]) {
+    hexdump_bytes(data);
+}
+
