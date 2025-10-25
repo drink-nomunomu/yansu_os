@@ -23,9 +23,12 @@ pub fn get_global_vram_resolutions() -> Option<(i64, i64)> {
 pub fn global_print(args: fmt::Arguments) {
     let mut writer = SerialPort::default();
     fmt::write(&mut writer, args).unwrap();
-    if let Some(w) = &mut *GLOBAL_VRAM_WRITER.lock() {
-        fmt::write(w, args).expect("Failed to write to GLOBAL_VRAM_WRITER");
-    }
+    // 画面へのデバッグログ表示を無効化
+    // シリアルポートへの出力のみを残す
+    // 以下のコードは無効化
+    // if let Some(ref mut vram) = *GLOBAL_VRAM_WRITER.lock() {
+    //     fmt::write(vram, args).unwrap();
+    // }
 }
 
 #[macro_export]

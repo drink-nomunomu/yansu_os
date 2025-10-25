@@ -17,6 +17,7 @@ pub mod graphics;
 pub mod hpet;
 pub mod init;
 pub mod keyboard;
+pub mod logo;
 pub mod mmio;
 pub mod mutex;
 pub mod pci;

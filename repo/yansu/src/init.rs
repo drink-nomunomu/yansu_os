@@ -86,7 +86,8 @@ pub fn init_display(vram: &mut VramBufferInfo) {
     let vw = vram.width();
     let vh = vram.height();
     fill_rect(vram, 0x000000, 0, 0, vw, vh).expect("fill_rect failed");
-    draw_test_pattern(vram);
+    // テストパターン描画を無効化
+    // draw_test_pattern(vram);
 }
 
 pub fn init_pci(acpi: &AcpiRsdpStruct) {
