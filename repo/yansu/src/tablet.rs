@@ -3,7 +3,9 @@ extern crate alloc;
 use crate::bits::extract_bits;
 use crate::bits::extract_bits_from_le_bytes;
 use crate::info;
+use crate::print::get_global_vram_resolutions;
 use crate::print::hexdump_bytes;
+use crate::range::map_value_in_range_inclusive;
 use crate::result::Result;
 use crate::usb::*;
 use crate::warn;
@@ -15,6 +17,7 @@ use alloc::rc::Rc;
 use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
 #[derive(Debug)]
 #[repr(u8)]
@@ -51,11 +54,31 @@ pub struct UsbHidReportInputItem {
     pub is_array: bool,
     pub is_absolute: bool,
     pub bit_offset: usize,
+    pub logical_min: u32,
+    pub logical_max: u32,
 }
 
 impl UsbHidReportInputItem {
-    fn value_from_report(&self, report: &[u8]) -> Option<u64> {
-        extract_bits_from_le_bytes(report, self.bit_offset, self.bit_size)
+    fn value_from_report(&self, report: &[u8]) -> Option<i64> {
+        extract_bits_from_le_bytes(report, self.bit_offset, self.bit_size).map(|v| {
+            if self.bit_size >= 2 && extract_bits(v, self.bit_size - 1, 1) == 1 {
+                -(!extract_bits(v, 0, self.bit_size - 1) as i64) - 1
+            } else {
+                v as i64
+            }
+        })
+    }
+    fn mapped_range_from_report(
+        &self,
+        report: &[u8],
+        to_range: RangeInclusive<i64>,
+    ) -> Result<i64> {
+        let v = self.value_from_report(report).ok_or("value was empty")?;
+        map_value_in_range_inclusive(
+            (self.logical_min as i64)..=(self.logical_max as i64),
+            to_range,
+            v,
+        )
     }
 }
 
@@ -69,6 +92,8 @@ fn parse_hid_report_descriptor(report: &[u8]) -> Result<Vec<UsbHidReportInputIte
     let mut report_size = 0;
     let mut report_count = 0;
     let mut bit_offset = 0;
+    let mut logical_min = 0;
+    let mut logical_max = 0;
     while let Some(prefix) = it.next() {
         let b_size = match prefix & 0b11 {
             0b11 => 4,
@@ -122,6 +147,8 @@ fn parse_hid_report_descriptor(report: &[u8]) -> Result<Vec<UsbHidReportInputIte
                             is_array,
                             is_absolute,
                             bit_offset,
+                            logical_min,
+                            logical_max,
                         });
                         bit_offset += report_size;
                     }
@@ -148,9 +175,11 @@ fn parse_hid_report_descriptor(report: &[u8]) -> Result<Vec<UsbHidReportInputIte
             }
             (UsbHidReportItemType::Global, 0b0001) => {
                 info!("G: Logical Minimum: {data_value:#X}");
+                logical_min = data_value;
             }
             (UsbHidReportItemType::Global, 0b0010) => {
                 info!("G: Logical Maximum: {data_value:#X}");
+                logical_max = data_value;
             }
             (UsbHidReportItemType::Global, 0b0111) => {
                 info!("G: Report Size: {data_value} bits");
@@ -269,6 +298,7 @@ pub async fn start_usb_tablet(
         .iter()
         .find(|e| e.usage == UsbHidUsage::Y && e.is_absolute)
         .ok_or("Absolute pointer Y not found")?;
+    let (vw, vh) = get_global_vram_resolutions().ok_or("global VRAM is not set")?;
     loop {
         let report = request_hid_report(xhc, slot, ctrl_ep_ring).await?;
         if report == prev_report {
@@ -277,8 +307,9 @@ pub async fn start_usb_tablet(
         let l = desc_button_l.value_from_report(&report);
         let r = desc_button_r.value_from_report(&report);
         let c = desc_button_c.value_from_report(&report);
-        let ax = desc_abs_x.value_from_report(&report);
-        let ay = desc_abs_y.value_from_report(&report);
+
+        let ax = desc_abs_x.mapped_range_from_report(&report, 0..=(vw - 1));
+        let ay = desc_abs_y.mapped_range_from_report(&report, 0..=(vh - 1));
         info!("{report:?}: ({l:?}, {c:?}, {r:?}, {ax:?}, {ay:?})");
         prev_report = report;
     }
