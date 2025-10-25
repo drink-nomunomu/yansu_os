@@ -8,7 +8,6 @@
 #![test_runner(crate::test_runner::test_runner)]
 #![reexport_test_harness_main = "run_unit_tests"]
 #![no_main]
-
 pub mod acpi;
 pub mod allocator;
 pub mod bits;
@@ -16,6 +15,7 @@ pub mod executor;
 pub mod graphics;
 pub mod hpet;
 pub mod init;
+pub mod keyboard;
 pub mod mmio;
 pub mod mutex;
 pub mod pci;
