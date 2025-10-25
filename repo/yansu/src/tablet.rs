@@ -51,45 +51,7 @@ pub struct UsbHidReportInputItem {
     pub is_absolute: bool,
 }
 
-pub async fn start_usb_tablet(
-    xhc: &Rc<Controller>,
-    slot: u8,
-    ctrl_ep_ring: &mut CommandRing,
-    device_descriptor: &UsbDeviceDescriptor,
-    descriptors: &Vec<UsbDescriptor>,
-) -> Result<()> {
-    // vid:pid = 0x0627:0x0001
-    if device_descriptor.device_class != 0
-        || device_descriptor.device_subclass != 0
-        || device_descriptor.device_protocol != 0
-        || device_descriptor.vendor_id != 0x0627
-        || device_descriptor.product_id != 0x0001
-    {
-        return Err("Not a USB Tablet");
-    }
-    let (_config_desc, interface_desc, other_desc_list) =
-        pick_interface_with_triple(descriptors, (3, 0, 0))
-            .ok_or("No USB KBD Boot interface found")?;
-    info!("USB tablet found");
-    let hid_desc = other_desc_list
-        .iter()
-        .flat_map(|e| match e {
-            UsbDescriptor::Hid(e) => Some(e),
-            _ => None,
-        })
-        .next()
-        .ok_or("No HID Descriptor found")?;
-    info!("HID Descriptor: {hid_desc:?}");
-    let report = request_hid_report_descriptor(
-        xhc,
-        slot,
-        ctrl_ep_ring,
-        interface_desc.interface_number,
-        hid_desc.report_descriptor_length as usize,
-    )
-    .await?;
-    info!("Report Descriptor:");
-    hexdump_bytes(&report);
+fn parse_hid_report_descriptor(report: &[u8]) -> Result<Vec<UsbHidReportInputItem>> {
     let mut it = report.iter();
     let mut input_report_items = Vec::new();
     let mut usage_queue = VecDeque::new();
@@ -224,8 +186,50 @@ pub async fn start_usb_tablet(
             usage_max = None;
         }
     }
+    Ok(input_report_items)
+}
+
+pub async fn start_usb_tablet(
+    xhc: &Rc<Controller>,
+    slot: u8,
+    ctrl_ep_ring: &mut CommandRing,
+    device_descriptor: &UsbDeviceDescriptor,
+    descriptors: &Vec<UsbDescriptor>,
+) -> Result<()> {
+    // vid:pid = 0x0627:0x0001
+    if device_descriptor.device_class != 0
+        || device_descriptor.device_subclass != 0
+        || device_descriptor.device_protocol != 0
+        || device_descriptor.vendor_id != 0x0627
+        || device_descriptor.product_id != 0x0001
+    {
+        return Err("Not a USB Tablet");
+    }
+    let (_config_desc, interface_desc, other_desc_list) =
+        pick_interface_with_triple(descriptors, (3, 0, 0))
+            .ok_or("No USB KBD Boot interface found")?;
+    info!("USB tablet found");
+    let hid_desc = other_desc_list
+        .iter()
+        .flat_map(|e| match e {
+            UsbDescriptor::Hid(e) => Some(e),
+            _ => None,
+        })
+        .next()
+        .ok_or("No HID Descriptor found")?;
+    info!("HID Descriptor: {hid_desc:?}");
+    let report = request_hid_report_descriptor(
+        xhc,
+        slot,
+        ctrl_ep_ring,
+        interface_desc.interface_number,
+        hid_desc.report_descriptor_length as usize,
+    )
+    .await?;
+    info!("Report Descriptor:");
     hexdump_bytes(&report);
-    info!("USB HID Report Descriptor parsed:");
+
+    let input_report_items = parse_hid_report_descriptor(&report)?;
     for e in input_report_items {
         info!(" {e:?}")
     }
