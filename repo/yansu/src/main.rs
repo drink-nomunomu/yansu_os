@@ -47,15 +47,14 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     // warn!("warn");
     // error!("error");
 
-    // hexdump_struct(efi_system_table);
+    hexdump_struct(efi_system_table);
     let mut vram = init_vram(efi_system_table).expect("init_vram failed");
 
     // 画面を初期化
     init_display(&mut vram);
     // 新しいアスキーアートを表示
     draw_yansu_os_logo(&mut vram).expect("Failed to draw YANSU_OS logo");
-    
-    
+
     set_global_vram(vram);
 
     let acpi = efi_system_table.acpi_table().expect("ACPI table not found");
@@ -70,7 +69,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 
     let (_gdt, _idt) = init_exceptions();
 
-    // trigger_debug_interrupt();
+    trigger_debug_interrupt();
     // info!("Execution continued.");
 
     let (_gdt, _idt) = init_exceptions();
@@ -82,7 +81,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 
     let task1 = async move {
         for i in 100..=103 {
-            // info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
+            info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
             sleep(Duration::from_secs(1)).await;
         }
         Ok(())
@@ -90,7 +89,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 
     let task2 = async move {
         for i in 200..=203 {
-            // info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
+            info!("{i} hpet.main_counter = {:?}", global_timestamp() - t0);
             sleep(Duration::from_secs(2)).await;
         }
         Ok(())
@@ -99,14 +98,14 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     let serial_task = async {
         let sp = SerialPort::default();
         if let Err(e) = sp.loopback_test() {
-            // error!("{e:?}");
+            error!("{e:?}");
             return Err("serial: loopback test failed");
         }
         // info!("Started to monitor serial port");
         loop {
             if let Some(v) = sp.try_read() {
                 let c = char::from_u32(v as u32);
-                // info!("serial input: {v:#04X} = {c:?}");
+                info!("serial input: {v:#04X} = {c:?}");
             }
             sleep(Duration::from_millis(20)).await;
         }
@@ -119,6 +118,6 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    // error!("PANIC: {info:?}");
+    error!("PANIC: {info:?}");
     exit_qemu(QemuExitCode::Fail);
 }
