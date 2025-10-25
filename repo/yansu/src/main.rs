@@ -16,7 +16,7 @@ use yansu::init::init_display;
 use yansu::init::init_hpet;
 use yansu::init::init_paging;
 use yansu::init::init_pci;
-use yansu::print::hexdump;
+use yansu::print::hexdump_struct;
 use yansu::print::set_global_vram;
 use yansu::println;
 use yansu::qemu::exit_qemu;
@@ -45,8 +45,7 @@ fn efi_main(image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     warn!("warn");
     error!("error");
 
-    hexdump(efi_system_table);
-
+    hexdump_struct(efi_system_table);
     let mut vram = init_vram(efi_system_table).expect("init_vram failed");
 
     init_display(&mut vram);
