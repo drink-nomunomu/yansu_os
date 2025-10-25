@@ -14,6 +14,7 @@ use crate::pci::Pci;
 use crate::pci::VendorDeviceId;
 use crate::pin::IntoPinnedMutableSlice;
 use crate::result::Result;
+use crate::slice::Sliceable;
 use crate::volatile::Volatile;
 use crate::x86::busy_loop_hint;
 use alloc::boxed::Box;
@@ -196,7 +197,10 @@ impl PciXhciDriver {
                 } else {
                     None
                 };
-                info!("xhci: v/p/s = {vendor:?}/{product:?}/{serial:?}")
+                info!("xhci: v/p/s = {vendor:?}/{product:?}/{serial:?}");
+                let descriptors =
+                    Self::request_config_descriptor_and_rest(&xhc, slot, &mut ctrl_ep_ring).await?;
+                info!("xhci: {descriptors:?}")
             }
         }
         Ok(())
@@ -303,6 +307,36 @@ impl PciXhciDriver {
         )
         .await?;
         Ok(buf.as_ref().get_ref().to_vec())
+    }
+    async fn request_config_descriptor_and_rest(
+        xhc: &Rc<Controller>,
+        slot: u8,
+        ctrl_ep_ring: &mut CommandRing,
+    ) -> Result<Vec<UsbDescriptor>> {
+        let mut config_descriptor = Box::pin(ConfigDescriptor::default());
+        xhc.request_descriptor(
+            slot,
+            ctrl_ep_ring,
+            UsbDescriptorType::Config,
+            0,
+            0,
+            config_descriptor.as_mut().as_mut_slice(),
+        )
+        .await?;
+        let buf = vec![0; config_descriptor.total_length()];
+        let mut buf = Box::into_pin(buf.into_boxed_slice());
+        xhc.request_descriptor(
+            slot,
+            ctrl_ep_ring,
+            UsbDescriptorType::Config,
+            0,
+            0,
+            buf.as_mut(),
+        )
+        .await?;
+        let iter = DescriptorIterator::new(&buf);
+        let descriptors: Vec<UsbDescriptor> = iter.collect();
+        Ok(descriptors)
     }
 }
 
@@ -1541,3 +1575,119 @@ impl StatusStageTrb {
         }
     }
 }
+
+#[derive(Debug, Copy, Clone)]
+pub enum UsbDescriptor {
+    Config(ConfigDescriptor),
+    Endpoint(EndpointDescriptor),
+    Interface(InterfaceDescriptor),
+    Unknown { desc_len: u8, desc_type: u8 },
+}
+#[derive(Debug, Copy, Clone, Default)]
+#[allow(unused)]
+#[repr(packed)]
+pub struct ConfigDescriptor {
+    desc_length: u8,
+    desc_type: u8,
+    total_length: u16,
+    num_of_interfaces: u8,
+    config_value: u8,
+    config_string_index: u8,
+    attribute: u8,
+    max_power: u8,
+    //
+    _pinned: PhantomPinned,
+}
+const _: () = assert!(size_of::<ConfigDescriptor>() == 9);
+impl ConfigDescriptor {
+    pub fn total_length(&self) -> usize {
+        self.total_length as usize
+    }
+    pub fn config_value(&self) -> u8 {
+        self.config_value
+    }
+}
+unsafe impl IntoPinnedMutableSlice for ConfigDescriptor {}
+unsafe impl Sliceable for ConfigDescriptor {}
+pub struct DescriptorIterator<'a> {
+    buf: &'a [u8],
+    index: usize,
+}
+impl<'a> DescriptorIterator<'a> {
+    pub fn new(buf: &'a [u8]) -> Self {
+        Self { buf, index: 0 }
+    }
+}
+impl<'a> Iterator for DescriptorIterator<'a> {
+    type Item = UsbDescriptor;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.buf.len() {
+            None
+        } else {
+            let buf = &self.buf[self.index..];
+            let desc_len = buf[0];
+            let desc_type = buf[1];
+            let desc = match desc_type {
+                e if e == UsbDescriptorType::Config as u8 => {
+                    UsbDescriptor::Config(ConfigDescriptor::copy_from_slice(buf).ok()?)
+                }
+                e if e == UsbDescriptorType::Interface as u8 => {
+                    UsbDescriptor::Interface(InterfaceDescriptor::copy_from_slice(buf).ok()?)
+                }
+                e if e == UsbDescriptorType::Endpoint as u8 => {
+                    UsbDescriptor::Endpoint(EndpointDescriptor::copy_from_slice(buf).ok()?)
+                }
+                _ => UsbDescriptor::Unknown {
+                    desc_len,
+                    desc_type,
+                },
+            };
+            self.index += desc_len as usize;
+            Some(desc)
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+#[allow(unused)]
+#[repr(packed)]
+pub struct InterfaceDescriptor {
+    desc_length: u8,
+    desc_type: u8,
+    interface_number: u8,
+    alt_setting: u8,
+    num_of_endpoints: u8,
+    interface_class: u8,
+    interface_subclass: u8,
+    interface_protocol: u8,
+    interface_index: u8,
+}
+const _: () = assert!(size_of::<InterfaceDescriptor>() == 9);
+unsafe impl IntoPinnedMutableSlice for InterfaceDescriptor {}
+unsafe impl Sliceable for InterfaceDescriptor {}
+
+#[derive(Debug, Copy, Clone, Default)]
+#[allow(unused)]
+#[repr(packed)]
+pub struct EndpointDescriptor {
+    pub desc_length: u8,
+    pub desc_type: u8,
+    // endpoint_address:
+    // - bit[0..=3]: endpoint number
+    // - bit[7]: direction(0: out, 1: in)
+    pub endpoint_address: u8,
+    // attributes:
+    // - bit[0..=1]: transfer type(0: Control, 1: Isochronous, 2: Bulk, 3:
+    // Interrupt)
+    pub attributes: u8,
+    pub max_packet_size: u16,
+    // interval:
+    // [xhci] Table 6-12
+    // interval_ms = interval (For FS/LS Interrupt)
+    // interval_ms = 2^(interval-1) (For FS Isoch)
+    // interval_ms = 2^(interval-1) (For SSP/SS/HS)
+    pub interval: u8,
+}
+const _: () = assert!(size_of::<EndpointDescriptor>() == 7);
+unsafe impl IntoPinnedMutableSlice for EndpointDescriptor {}
+unsafe impl Sliceable for EndpointDescriptor {}
